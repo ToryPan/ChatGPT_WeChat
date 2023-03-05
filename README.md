@@ -19,9 +19,33 @@
 python(3.8)主要模块：flask, wechatpy
 
 **演示：**
+公众号：Tory的实验室，关注发送消息即可体验。
 
 ![image-20230305121520474](https://github.com/ToryPan/ChatGPT_WeChat/blob/main/pic/image-20230305121520474.png)
 
+**使用方法：**
 
+设置myflask.py里面的参数：
+
+```python
+##############################openai基础设置##########################
+tokens = ['Bearer sk-XXX1','Bearer sk-XXX2']
+max_tokens = 250
+model = 'gpt-3.5-turbo'
+temperature = 0.8
+rsize = 200 # 设置每条消息的回复长度，超过长度将被分割
+##############################wechat基础设置##########################
+wechattoken = 'wechattoken'
+```
+
+启动flask
+
+```sh
+export FLASK_APP=myflask
+
+flask run --host=0.0.0.0 --port=80
+# 或者
+nohup flask run --host=0.0.0.0 --port=80 >> /home/jupyter/flask/log/wechat.log 2>&1 &
+```
 
 
