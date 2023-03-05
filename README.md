@@ -20,7 +20,7 @@ python(3.8)主要模块：flask, wechatpy
 
 **演示：**
 
-![image-20230305121520474](D:\Python\gpt\ChatGPT_WeChat\pic\image-20230305121520474.png)
+![image-20230305121520474](https://github.com/ToryPan/ChatGPT_WeChat/blob/main/pic/image-20230305121520474.png)
 
 
 
