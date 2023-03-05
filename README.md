@@ -1,6 +1,6 @@
 **简介：**
 
-基于Flask，实现个人微信公众号【无认证】接入ChatGPT【GPT-3.5-Turbo】
+未认证微信公众号接入chatgpt，基于Flask，实现个人微信公众号【无认证】接入ChatGPT【GPT-3.5-Turbo】
 
 **背景：**
 
