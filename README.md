@@ -19,6 +19,7 @@
 python(3.8)主要模块：flask, wechatpy
 
 **演示：**
+
 公众号：Tory的实验室，关注发送消息即可体验。
 
 ![image-20230305121520474](https://github.com/ToryPan/ChatGPT_WeChat/blob/main/pic/image-20230305121520474.png)
