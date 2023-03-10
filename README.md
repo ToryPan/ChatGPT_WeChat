@@ -14,7 +14,7 @@
 
 **需求：**
 
-一台服务器（我用的Azure，学生党白嫖免费的）
+一台服务器（需要能访问openai接口的）
 
 python(3.8)主要模块：flask, wechatpy
 
