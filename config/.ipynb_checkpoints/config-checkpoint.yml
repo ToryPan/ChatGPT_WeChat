@@ -1,0 +1,36 @@
+# 微信相关设置
+wechat:
+  appid: "****"
+  secret: "****"
+  token: "****"
+
+# openai相关设置
+openai:
+  api_keys:
+   - "Bearer sk-****"
+   - "Bearer sk-****"
+   - "Bearer sk-****"
+  # 单条消息的长度
+  max_tokens: 150
+  # 模型
+  model: "gpt-3.5-turbo-0301"
+  # temperature，越大随机性越强
+  temperature: 0.8
+  # 有时候文本长度超过150，用该参数限制长度避免超过微信能发送的最长消息
+  rsize: 500
+  # 对话的保存历史
+  save_history: 21
+  
+# azure文本转语音设置
+azure:
+  # 是否开启文本转语音服务
+  trans_to_voice: false
+  # 新定义文本长度，开启后增加处理时间，避免文本太长，处理时间过久，超过15s
+  max_token: 80
+  # 密钥
+  subscription: "****"
+  region: "koreacentral"
+  # 中文语音模型
+  zh_model: "zh-CN-XiaoyanNeural"
+  # 英文语音模型
+  en_model: "en-US-AriaNeural"
