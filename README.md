@@ -48,5 +48,5 @@ flask run --host=0.0.0.0 --port=80
 # 或者
 nohup flask run --host=0.0.0.0 --port=80 >> /home/jupyter/flask/log/wechat.log 2>&1 &
 ```
-
+<audio src="[mp3文件链接地址](https://github.com/ToryPan/ChatGPT_WeChat/blob/main/voice/自我介绍1.mp3)"></audio>
 
