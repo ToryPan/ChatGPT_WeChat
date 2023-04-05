@@ -2,6 +2,24 @@
 
 未认证微信公众号接入chatgpt，基于Flask，实现个人微信公众号【无认证】接入ChatGPT【GPT-3.5-Turbo】
 
+**--更新说明：**
+  
+  V1.0：
+  
+  -新增语音聊天功能，接入微软云文本转语音服务(免费接入)，实现语音对话(中英文)；
+  
+  -内置英语学习模板, 回复模板消息即可进行英语主题对话；
+  
+  -新增微信后台白名单IP检测，防止doss等；
+  
+  -新增用户消息频率限制，防止恶意刷消息；
+  
+  -自动清理临时语音文件；
+  
+  -自动清理微信后台上传临时语音素材；
+  
+  -优化性能、修复BUG。
+
 **背景：**
 
 最近看到ChatGPT提供了API接口，手上刚好有台服务器和一个公众号，所以想着写一个聊天机器人🤖玩一玩。不过只有一个没有认证的个人公众号(资源有限😭)，这个公众号的限制就是：
@@ -16,7 +34,9 @@
 
 一台服务器（需要能访问openai接口的，可能需要海外的~）
 
-python(3.8)主要模块：flask, wechatpy
+如果需要开启文本转语音服务，需要注册Azure的文本转语音，该服务注册和使用免费，具体参考网址：<https://azure.microsoft.com/en-us/products/cognitive-services/text-to-speech/>
+
+微信公众号：个人类型即可
 
 **演示：**
 
@@ -26,17 +46,45 @@ python(3.8)主要模块：flask, wechatpy
 
 **使用方法：**
 
-设置myflask.py里面的参数：
+设置config里面的config.yml参数：
 
-```python
-##############################openai基础设置##########################
-tokens = ['Bearer sk-XXX1','Bearer sk-XXX2']
-max_tokens = 250
-model = 'gpt-3.5-turbo'
-temperature = 0.8
-rsize = 200 # 设置每条消息的回复长度，超过长度将被分割
-##############################wechat基础设置##########################
-wechattoken = 'wechattoken'
+```yml
+# 微信相关设置
+wechat:
+  appid: "****"
+  secret: "****"
+  token: "****"
+
+# openai相关设置
+openai:
+  api_keys:
+   - "Bearer sk-****"
+   - "Bearer sk-****"
+   - "Bearer sk-****"
+  # 单条消息的长度
+  max_tokens: 150
+  # 模型
+  model: "gpt-3.5-turbo-0301"
+  # temperature，越大随机性越强
+  temperature: 0.8
+  # 有时候文本长度超过150，用该参数限制长度避免超过微信能发送的最长消息
+  rsize: 500
+  # 对话的保存历史
+  save_history: 21
+  
+# azure文本转语音设置
+azure:
+  # 是否开启文本转语音服务
+  trans_to_voice: false
+  # 新定义文本长度，开启后增加处理时间，避免文本太长，处理时间过久，超过15s
+  max_token: 80
+  # 密钥
+  subscription: "****"
+  region: "koreacentral"
+  # 中文语音模型
+  zh_model: "zh-CN-XiaoyanNeural"
+  # 英文语音模型
+  en_model: "en-US-AriaNeural"
 ```
 
 启动flask
@@ -48,5 +96,5 @@ flask run --host=0.0.0.0 --port=80
 # 或者
 nohup flask run --host=0.0.0.0 --port=80 >> /home/jupyter/flask/log/wechat.log 2>&1 &
 ```
-<audio src="[mp3文件链接地址](https://github.com/ToryPan/ChatGPT_WeChat/blob/main/voice/自我介绍1.mp3)"></audio>
+
 
