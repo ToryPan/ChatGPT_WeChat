@@ -1,38 +1,48 @@
+# 导入模块
 import hashlib
 from flask import Flask, request, make_response
-from wechatpy import parse_message, create_reply
+from flask import abort
+from wechatpy import parse_message, create_reply, WeChatClient
+from wechatpy.replies import VoiceReply
 import wechatpy
-import urllib
 import time
-import pickle
 import os
-
+import yaml
+# 导入自定义类
+from whiteIPManage import whiteIP
 from gptManage import gptSessionManage,gptMessageManage
- 
+
+##############################读取配置##########################
+with open('config/config.yml', 'r') as f:
+    configs = yaml.load(f, Loader=yaml.FullLoader)
+##############################设置微信相关参数##########################
+appid = configs['wechat']['appid']
+secret = configs['wechat']['secret']
+client = WeChatClient(appid, secret)
+wechattoken = configs['wechat']['token']
+
+##############################设置IP白名单,预防doss##########################
+mywhiteIP = whiteIP(client)
+
+##############################openai基础设置##########################
+msgsmanag = gptMessageManage(client,configs)
+
+
 app = Flask(__name__)
 app.debug = True
 
-##############################openai基础设置##########################
-tokens = ['Bearer sk-XXX1','Bearer sk-XXX2']
-max_tokens = 250
-model = 'gpt-3.5-turbo'
-temperature = 0.8
-rsize = 200 # 设置每条消息的回复长度，超过长度将被分割
-##############################wechat基础设置##########################
-wechattoken = 'wechattoken'
-
-
-msgsmanag = gptMessageManage(tokens,max_tokens,model,temperature,rsize)
-
-@app.route("/")
-def hello():
-    return "Hello World!"
+# @app.route("/")
+# def hello():
+#     return "Hello test!"
 
 @app.route('/wechat/', methods=['GET', 'POST']) 
 def wechat():
     global reply
     global msgsmanag
     global wechattoken
+    global mywhiteIP
+    if not mywhiteIP.is_white_ip(request.remote_addr):
+        abort(404)
     if request.method == 'GET':
         token = wechattoken# 设置 wechat token
         data = request.args
@@ -48,12 +58,40 @@ def wechat():
     else:
         msg = parse_message(request.get_data())
         if msg.type == 'text':
-            rtext = msgsmanag.get_response(msg,int(time.time()))
-            reply = create_reply(str(rtext).strip(), message=msg)#创建消息
+            cctime = int(time.time())
+            # 内置英语对话模板
+            if msg.content[:4]=='英语对话':
+                tt = f'''Now please be my English teacher. We will simulate an English chat, and in addition to answering, you also need to point out my expression errors. Today's topic is "{msg.content.split(' ')[1]}". Your chat response needs to guide me to complete the English topic. If you understand, please reply with the requirements for today's chat practice.'''
+                rtext = msgsmanag.get_response(msg,cctime,tt)
+            else:
+                rtext = msgsmanag.get_response(msg,cctime,msg.content)
+            rt = str(rtext).strip()
+            reply = create_reply(rt, message=msg)#创建消息
+            return reply.render()
+        if msg.type == 'voice':
+            cctime = int(time.time())
+            try:
+                rtext = msgsmanag.get_response(msg,cctime,msg.recognition)
+            except Exception as e:
+                rtext = '您发送了一条语音消息！'
+            # print('打印返回的内容',rtext)
+            if isinstance(rtext, list):
+                # print('返回的是列表',rtext)
+                reply = VoiceReply(message=msg)
+                reply.media_id = rtext[0]
+            else:
+                reply = create_reply(rtext, message=msg)
+            # 等候1.2s的原因是，素材上传至微信后台需要时间审核, 否则回复的语音会存在问题
+            time.sleep(1.2)
+            # 需要判断一下等候1.2S之后，是否有微信的二次请求
+            if cctime == msgsmanag.msgs_time_dict.get(str(msg.id),''):
+                return reply.render()
         if msg.type == 'image':
-            rtext = '你发送了一张图片'
+            rtext = '您发送了一张图片！'
             reply = create_reply(rtext, message=msg)#创建消息
-        return reply.render()#回复消息
+            return reply.render()#回复消息
+        return ''
+
 
 if __name__ == '__main__':
     app.run( host = '0.0.0.0')
