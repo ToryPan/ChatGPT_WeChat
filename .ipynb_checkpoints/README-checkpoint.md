@@ -49,7 +49,7 @@
   2.语音服务使用介绍：[语音服务已接入](https://mp.weixin.qq.com/s/cEaqzOFzXGNFm7yd4zWwBw)
 
 
-![image-20230305121520474](https://github.com/ToryPan/ChatGPT_WeChat/blob/main/pic/image-20230305121520474.png)
+![image-20230305121520474](https://github.com/ToryPan/ChatGPT_WeChat/blob/main/pic/image-20230305121520474.png=200x)
 
 **使用方法：**
 
