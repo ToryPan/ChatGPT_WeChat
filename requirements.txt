@@ -1,4 +1,4 @@
-azure_storage==0.37.0
+azure-cognitiveservices-speech==0.37.0
 Flask==2.2.2
 openai==0.27.0
 PyYAML==6.0
