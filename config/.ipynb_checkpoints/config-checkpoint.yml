@@ -6,11 +6,12 @@ wechat:
 
 # openai相关设置
 openai:
+  #填写openai的api_keys时，要注意前面要加上：Bearer, 可以填写多个,因为单个账号有速率的限制
   api_keys:
    - "Bearer sk-****"
-   - "Bearer sk-****"
-   - "Bearer sk-****"
-  # 单条消息的长度
+   # - "Bearer sk-****"
+   # - "Bearer sk-****"
+  # 单条消息的长度，这个参数对回复速度有非常大的影响，请不要填太大~
   max_tokens: 150
   # 模型
   model: "gpt-3.5-turbo-0301"
