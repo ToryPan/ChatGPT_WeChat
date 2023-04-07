@@ -1,8 +1,11 @@
 # 微信相关设置
 wechat:
+  token: "****"
+  # 是否获取微信公众平台的ip白名单(用于防止doss检测)
+  ip_detection: false
+  # 如果上面的选项为true，下面两项内容必填；如要开启后面文本转语音服务，下面两项内容必填
   appid: "****"
   secret: "****"
-  token: "****"
 
 # openai相关设置
 openai:
@@ -12,7 +15,7 @@ openai:
    # - "Bearer sk-****"
    # - "Bearer sk-****"
   # 单条消息的长度，这个参数对回复速度有非常大的影响，请不要填太大~
-  max_tokens: 150
+  max_tokens: 120
   # 模型
   model: "gpt-3.5-turbo-0301"
   # temperature，越大随机性越强
@@ -26,6 +29,7 @@ openai:
 azure:
   # 是否开启文本转语音服务
   trans_to_voice: false
+  # 如上面的选项为false，下面的内容不用填写
   # 新定义文本长度，开启后增加处理时间，避免文本太长，处理时间过久，超过15s
   max_token: 80
   # 密钥

@@ -18,7 +18,10 @@ with open('config/config.yml', 'r') as f:
 ##############################设置微信相关参数##########################
 appid = configs['wechat']['appid']
 secret = configs['wechat']['secret']
-client = WeChatClient(appid, secret)
+if configs['wechat']['ip_detection'] or configs['azure']['trans_to_voice']:
+    client = WeChatClient(appid, secret)
+else: 
+    client = ''
 wechattoken = configs['wechat']['token']
 
 ##############################设置IP白名单,预防doss##########################
@@ -41,8 +44,9 @@ def wechat():
     global msgsmanag
     global wechattoken
     global mywhiteIP
-    if not mywhiteIP.is_white_ip(request.remote_addr):
-        abort(404)
+    if configs['wechat']['ip_detection']:
+        if not mywhiteIP.is_white_ip(request.remote_addr):
+            abort(404)
     if request.method == 'GET':
         token = wechattoken# 设置 wechat token
         data = request.args
