@@ -70,7 +70,13 @@ def wechat():
             else:
                 rtext = msgsmanag.get_response(msg,cctime,msg.content)
             rt = str(rtext).strip()
-            reply = create_reply(rt, message=msg)#创建消息
+#            reply = create_reply(rt, message=msg)#创建消息
+            #如果msg包含sensitive_data中的词，则不回复:
+            if(any(word if word in msg.content else False for word in sensitive_data)):
+                reply = create_reply("警告：包含敏感词！", message=msg)
+            else:
+                reply = create_reply(rt, message=msg)#创建消息
+                
             return reply.render()
         if msg.type == 'voice':
             cctime = int(time.time())
@@ -97,5 +103,27 @@ def wechat():
         return ''
 
 
+    #使用OS读取txt文件内容，以换行符为分界存为一个列表
+    current_path = os.path.dirname(__file__)
+    with open(current_path+"/sensitive_words_lines.txt", 'r', encoding='utf-8') as f:
+        sensitive_data = f.readlines()
+        #去除列表中的换行符
+        sensitive_data = [word.strip() for word in sensitive_data]
+
+    from gevent import pywsgi
+    server = pywsgi.WSGIServer(('0.0.0.0', 80), app)
+    server.serve_forever()   
+    
 if __name__ == '__main__':
-    app.run( host = '0.0.0.0')
+    #app.run( host = '0.0.0.0')
+    #使用OS读取txt文件内容，以换行符为分界存为一个列表
+    current_path = os.path.dirname(__file__)
+    with open(current_path+"/sensitive_words_lines.txt", 'r', encoding='utf-8') as f:
+        sensitive_data = f.readlines()
+        #去除列表中的换行符
+        sensitive_data = [word.strip() for word in sensitive_data]
+
+    from gevent import pywsgi
+    server = pywsgi.WSGIServer(('0.0.0.0', 80), app)
+    server.serve_forever()    
+
