@@ -21,6 +21,7 @@ class gptSessionManage(object):
         self.messages = [{"role": "system", "content": "我是乐于助人的小助手，可以叫我Tory的小助手."}]
         self.sizeLim = save_history
         self.last_q_time = time.time()
+        self.last_msg = ''
     
     def add_send_message(self,msg):
         '''
@@ -34,6 +35,7 @@ class gptSessionManage(object):
             self.messages.pop(1)
             self.messages.pop(1)
         self.messages.append({"role": "user", "content": f"{msg}"})
+        self.last_msg = msg
         # 记录时间节点
         self.last_q_time = time.time()
 
@@ -48,6 +50,12 @@ class gptSessionManage(object):
         初始化会话
         '''
         self.messages = [{"role": "system", "content": "我是乐于助人的小助手，可以叫我Tory的小助手."}]
+    
+    def pop_last_message(self):
+        try:
+            self.messages.pop()
+        except Exception as e:
+            print(e)
         
 class gptMessageManage(object):
     '''
@@ -61,6 +69,7 @@ class gptMessageManage(object):
         self.model = configs['openai']['model']
         self.temperature = configs['openai']['temperature']
         self.max_tokens = configs['openai']['max_tokens']#每条消息最大字符
+        self.stream_response = configs['openai']['stream_response'] # 是否流式响应
         self.rsize = configs['openai']['rsize']# 设置每条消息的回复长度，超过长度将被分割
         # 记录信息的列表和字典
         self.msgs_list = dict()# msgID作为key，三次重复发送的msg放置在一个列表，结合append和pop构造队列，以实现轮流处理重复请求
@@ -178,9 +187,15 @@ class gptMessageManage(object):
         while len(self.msgs_list[str(msgs.id)])>0:
             mymsg = self.msgs_list[str(msgs.id)].pop(0)
             if msgs.type == 'text' or self.configs['azure']['trans_to_voice']==False:
-                self.msgs_returns_dict[str(mymsg.id)]=self.send_request(mymsg)
+                if self.stream_response:
+                    self.msgs_returns_dict[str(mymsg.id)]=self.send_request_stream(mymsg)
+                else:
+                    self.msgs_returns_dict[str(mymsg.id)]=self.send_request(mymsg)
             else:
-                self.msgs_returns_dict[str(mymsg.id)]=self.send_request_voice(mymsg)
+                if self.stream_response:
+                    self.msgs_returns_dict[str(mymsg.id)]=self.send_request_voice_stream(mymsg)
+                else:
+                    self.msgs_returns_dict[str(mymsg.id)]=self.send_request_voice(mymsg)
         self.msgs_status_dict[str(mymsg.id)] = 'haveResponse'
         return 'success'
             
@@ -189,6 +204,7 @@ class gptMessageManage(object):
         随机获取token，可以设置多个token，避免单个token超过请求限制。
         '''
         return random.choice(self.tokens)
+    
     def send_request(self,msgs):
         '''text消息处理'''
         try:
@@ -205,10 +221,11 @@ class gptMessageManage(object):
                 'temperature':self.temperature,
             }
 
-            response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=json_data,timeout=13.2)
+            response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=json_data,timeout=14.2)
             response_parse = json.loads(response.text)
             print(response_parse)
             if 'error' in response_parse:
+                self.msgs_msgdata_dict[str(msgs.source)].pop_last_message()
                 print(response_parse)
                 return '出错了，请稍后再试！'
             else:
@@ -216,8 +233,38 @@ class gptMessageManage(object):
                 return response_parse['choices'][0]['message']['content']
         except Exception as e:
             print(e)
-            # return '请求超时，请稍后再试！\n【近期官方接口响应变慢，若持续出现请求超时，还请换个时间再来😅~】'
-            return '请求超时，请稍后再试！'
+            self.msgs_msgdata_dict[str(msgs.source)].pop_last_message()
+            return '请求超时，请稍后再试！\n【近期官方接口响应变慢，若持续出现请求超时，还请换个时间再来😅~】'
+            # return '请求超时，请稍后再试！'
+            
+    def send_request_stream(self,msgs):
+        '''text消息处理_流式处理'''
+        
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': self.get_header(),
+        }
+        print('发送的消息：',self.msgs_msgdata_dict[str(msgs.source)].messages)
+        json_data = {
+            'model': self.model,
+            'messages': self.msgs_msgdata_dict[str(msgs.source)].messages,
+            'max_tokens':self.max_tokens,
+            'temperature':self.temperature,
+            'stream':True,
+        }
+        timeout=13.6
+
+        r = self.request_stream(headers,json_data,timeout)
+        code = r.get('code',2)
+        if code==0:
+            self.msgs_msgdata_dict[str(msgs.source)].add_res_message(r['content'])
+            return r['content']
+        elif code==1:
+            self.msgs_msgdata_dict[str(msgs.source)].pop_last_message()
+            return '请求超时，请稍后再试！\n【近期官方接口响应变慢，若持续出现请求超时，还请换个时间再来😅~】'
+        else:
+            self.msgs_msgdata_dict[str(msgs.source)].pop_last_message()
+            return '出错了，请稍后再试！'
         
     def send_request_voice(self,msgs):
         '''voice消息处理'''
@@ -239,6 +286,7 @@ class gptMessageManage(object):
             response_parse = json.loads(response.text)
             print(response_parse)
             if 'error' in response_parse:
+                self.msgs_msgdata_dict[str(msgs.source)].pop_last_message()
                 print(response_parse)
                 return '出错了，请稍后再试！'
             else:
@@ -255,8 +303,49 @@ class gptMessageManage(object):
                     self.msgs_msgdata_dict[str(msgs.source)].add_res_message(rtext)
                     return rtext
         except Exception as e:
+            self.msgs_msgdata_dict[str(msgs.source)].pop_last_message()
             print(e)
             return '请求超时，请稍后再试！'
+        
+    def send_request_voice_stream(self,msgs):
+        '''voice消息处理'''
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': self.get_header(),
+        }
+        print('发送的消息：',self.msgs_msgdata_dict[str(msgs.source)].messages)
+
+        json_data = {
+            'model': self.model,
+            'messages': self.msgs_msgdata_dict[str(msgs.source)].messages,
+            'max_tokens':self.configs['azure']['max_token'],
+            'temperature':self.temperature,
+            'stream':True,
+        }
+        timeout=8.5
+
+        r = self.request_stream(headers,json_data,timeout)
+        code = r.get('code',2)
+        if code==0:
+            rtext = r['content']
+            if self.get_voice_from_azure(rtext,str(msgs.source),str(msgs.id)):
+                media_id = self.upload_wechat_voice(str(msgs.source),str(msgs.id))
+                if media_id:
+                    self.msgs_msgdata_dict[str(msgs.source)].add_res_message(rtext)
+                    return [str(media_id)]
+                else:
+                    return rtext
+            else:
+                self.msgs_msgdata_dict[str(msgs.source)].add_res_message(rtext)
+                return rtext
+        elif code==1:
+            self.msgs_msgdata_dict[str(msgs.source)].pop_last_message()
+            print(e)
+            return '请求超时，请稍后再试！\n【近期官方接口响应变慢，若持续出现请求超时，还请换个时间再来😅~】'
+        else:
+            self.msgs_msgdata_dict[str(msgs.source)].pop_last_message()
+            print(response_parse)
+            return '出错了，请稍后再试！'
     
     def get_voice_from_azure(self,texts,msgsource,msgid):
         '''
@@ -340,5 +429,45 @@ class gptMessageManage(object):
                 self.del_uploaded_wechat_voice(mid)
             self.media_id_list = []
         return 
+    
+    def request_stream(self, headers,json_data,timeout):
+        '''
+        使用流式回复
+        输入:请求参数，
+        输出:dict,{code:012,content:xxx}
+            code:0:成功,1:超时,2:出错
+        '''
+        start_time = time.time()
+        try:
+            collected_chunks = []
+            collected_messages = []
+            
+            myrequest = requests.post('https://api.openai.com/v1/chat/completions', stream=True, headers=headers, json=json_data,timeout=timeout-0.8)
+            print(json_data)
+            client = SSEClient(myrequest)
+            response = client.events()
+            print('beginStream',type(response),time.time() - start_time)
+            aa = response.__next__()
+
+            while True:
+                try:
+                    # calculate the time delay of the chunk
+                    chunk_time = time.time() - start_time
+                    if chunk_time>=timeout:
+                        print('请求中断')
+                        full_reply_content = ''.join(collected_messages)
+                        return {'code':0,'content':full_reply_content}
+                        break
+                    chunk = response.__next__()
+                    collected_chunks.append(chunk)  # save the event response
+                    chunk_message = json.loads(chunk.data)['choices'][0]['delta'].get('content','')  # extract the message
+                    collected_messages.append(chunk_message)  # save the message
+                except Exception as e:
+                    break
+            full_reply_content = ''.join(collected_messages)
+            return {'code':0,'content':full_reply_content}
+        except Exception as e:
+            print(e)
+            return {'code':1,'content':'请求超时，请稍后再试！'}
         
         

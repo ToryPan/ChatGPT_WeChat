@@ -15,7 +15,9 @@ openai:
    # - "Bearer sk-****"
    # - "Bearer sk-****"
   # 单条消息的长度，这个参数对回复速度有非常大的影响，请不要填太大~
-  max_tokens: 120
+  max_tokens: 80
+  # 是否开启流式响应
+  stream_response: true
   # 模型
   model: "gpt-3.5-turbo-0301"
   # temperature，越大随机性越强
@@ -31,7 +33,7 @@ azure:
   trans_to_voice: false
   # 如上面的选项为false，下面的内容不用填写
   # 新定义文本长度，开启后增加处理时间，避免文本太长，处理时间过久，超过15s
-  max_token: 80
+  max_token: 50
   # 密钥
   subscription: "****"
   region: "koreacentral"
