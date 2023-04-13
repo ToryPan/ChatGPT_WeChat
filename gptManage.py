@@ -18,7 +18,7 @@ class gptSessionManage(object):
         '''
         初始化
         '''
-        self.messages = [{"role": "system", "content": "我是乐于助人的小助手，可以叫我Tory的小助手."}]
+        self.messages = [{"role": "system", "content": "我是ChatGPT, 一个由OpenAI训练的大型语言模型, 我旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。"}]
         self.sizeLim = save_history
         self.last_q_time = time.time()
         self.last_msg = ''
@@ -49,7 +49,7 @@ class gptSessionManage(object):
         '''
         初始化会话
         '''
-        self.messages = [{"role": "system", "content": "我是乐于助人的小助手，可以叫我Tory的小助手."}]
+        self.messages = [{"role": "system", "content": "我是ChatGPT, 一个由OpenAI训练的大型语言模型, 我旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。"}]
     
     def pop_last_message(self):
         try:
