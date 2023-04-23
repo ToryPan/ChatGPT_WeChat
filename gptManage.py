@@ -9,6 +9,7 @@ from wechatpy import WeChatClient
 import threading
 import os 
 from os import listdir
+from sseclient import SSEClient
 
 class gptSessionManage(object):
     '''
